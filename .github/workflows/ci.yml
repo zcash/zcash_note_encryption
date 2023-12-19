@@ -46,7 +46,7 @@ jobs:
       - name: Add target
         run: rustup target add ${{ matrix.target }}
       - name: Build crate
-        run: cargo build --no-default-features --verbose --target ${{ matrix.target }}
+        run: cargo build --features=alloc --no-default-features --verbose --target ${{ matrix.target }}
 
   bitrot:
     name: Bitrot check
