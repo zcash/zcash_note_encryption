@@ -24,7 +24,7 @@ use core::fmt::{self, Write};
 #[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(feature = "alloc")]
-use alloc::{borrow::ToOwned, vec::Vec};
+use alloc::vec::Vec;
 
 use chacha20::{
     cipher::{StreamCipher, StreamCipherSeek},
@@ -139,7 +139,7 @@ pub trait Domain {
     type Memo;
 
     type NotePlaintextBytes: AsMut<[u8]> + for<'a> From<&'a [u8]>;
-    type NoteCiphertextBytes: AsRef<[u8]> + for<'a> From<&'a [u8]>;
+    type NoteCiphertextBytes: AsMut<[u8]> + for<'a> From<(&'a [u8], &'a [u8])>;
     type CompactNotePlaintextBytes: AsMut<[u8]> + for<'a> From<&'a [u8]>;
     type CompactNoteCiphertextBytes: AsRef<[u8]>;
 
@@ -410,7 +410,7 @@ impl<D: Domain> NoteEncryption<D> {
         let tag = ChaCha20Poly1305::new(key.as_ref().into())
             .encrypt_in_place_detached([0u8; 12][..].into(), &[], output)
             .unwrap();
-        D::NoteCiphertextBytes::from(&[output, tag.as_ref()].concat())
+        D::NoteCiphertextBytes::from((output, tag.as_ref()))
     }
 
     /// Generates `outCiphertext` for this note.
@@ -476,9 +476,10 @@ fn try_note_decryption_inner<D: Domain, Output: ShieldedOutput<D>>(
     output: &Output,
     key: &D::SymmetricKey,
 ) -> Option<(D::Note, D::Recipient, D::Memo)> {
-    let mut enc_ciphertext = output.enc_ciphertext()?.as_ref().to_owned();
+    let mut enc_ciphertext = output.enc_ciphertext()?;
+    let enc_ciphertext_ref = enc_ciphertext.as_mut();
 
-    let (plaintext, tag) = extract_tag(&mut enc_ciphertext);
+    let (plaintext, tag) = extract_tag(enc_ciphertext_ref);
 
     ChaCha20Poly1305::new(key.as_ref().into())
         .decrypt_in_place_detached([0u8; 12][..].into(), &[], plaintext, &tag.into())
@@ -643,9 +644,10 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
     // be okay.
     let key = D::kdf(shared_secret, &ephemeral_key);
 
-    let mut enc_ciphertext = output.enc_ciphertext()?.as_ref().to_owned();
+    let mut enc_ciphertext = output.enc_ciphertext()?;
+    let enc_ciphertext_ref = enc_ciphertext.as_mut();
 
-    let (plaintext, tag) = extract_tag(&mut enc_ciphertext);
+    let (plaintext, tag) = extract_tag(enc_ciphertext_ref);
 
     ChaCha20Poly1305::new(key.as_ref().into())
         .decrypt_in_place_detached([0u8; 12][..].into(), &[], plaintext, &tag.into())
@@ -674,7 +676,7 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
 }
 
 // Splits the AEAD tag from the ciphertext.
-fn extract_tag(enc_ciphertext: &mut Vec<u8>) -> (&mut [u8], [u8; AEAD_TAG_SIZE]) {
+fn extract_tag(enc_ciphertext: &mut [u8]) -> (&mut [u8], [u8; AEAD_TAG_SIZE]) {
     let tag_loc = enc_ciphertext.len() - AEAD_TAG_SIZE;
 
     let (plaintext, tail) = enc_ciphertext.split_at_mut(tag_loc);
