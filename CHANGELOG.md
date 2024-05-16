@@ -6,6 +6,12 @@ and this library adheres to Rust's notion of
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Generalized the note plaintext size to support variable sizes by adding the
+  abstract types `NotePlaintextBytes`, `NoteCiphertextBytes`,
+  `CompactNotePlaintextBytes`, and `CompactNoteCiphertextBytes` to the `Domain`
+  trait.
+- Moved the specific constants into the `Domain` trait implementations.
 
 ## [0.4.0] - 2023-06-06
 ### Changed
