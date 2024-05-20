@@ -681,6 +681,6 @@ fn extract_tag(enc_ciphertext: &mut [u8]) -> (&mut [u8], [u8; AEAD_TAG_SIZE]) {
 
     let (plaintext, tail) = enc_ciphertext.split_at_mut(tag_loc);
 
-    let tag: [u8; AEAD_TAG_SIZE] = tail.try_into().unwrap();
+    let tag: [u8; AEAD_TAG_SIZE] = tail.as_ref().try_into().unwrap();
     (plaintext, tag)
 }
