@@ -296,7 +296,9 @@ pub trait Domain {
     /// Parses the given note plaintext bytes.
     ///
     /// Returns `None` if the byte slice does not represent a valid note plaintext.
-    fn parse_note_plaintext_bytes(plaintext: &[u8]) -> Option<Self::NotePlaintextBytes>;
+    fn parse_note_plaintext_bytes(plaintext: &[u8]) -> Option<Self::NotePlaintextBytes> {
+        Self::NotePlaintextBytes::from_slice(plaintext)
+    }
 
     /// Parses the given note ciphertext bytes.
     ///
@@ -306,14 +308,18 @@ pub trait Domain {
     fn parse_note_ciphertext_bytes(
         output: &[u8],
         tag: [u8; AEAD_TAG_SIZE],
-    ) -> Option<Self::NoteCiphertextBytes>;
+    ) -> Option<Self::NoteCiphertextBytes> {
+        Self::NoteCiphertextBytes::from_slice_with_tag(output, tag)
+    }
 
     /// Parses the given compact note plaintext bytes.
     ///
     /// Returns `None` if the byte slice does not represent a valid compact note plaintext.
     fn parse_compact_note_plaintext_bytes(
         plaintext: &[u8],
-    ) -> Option<Self::CompactNotePlaintextBytes>;
+    ) -> Option<Self::CompactNotePlaintextBytes> {
+        Self::CompactNotePlaintextBytes::from_slice(plaintext)
+    }
 }
 
 /// Trait that encapsulates protocol-specific batch trial decryption logic.
