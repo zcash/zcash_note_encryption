@@ -7,12 +7,27 @@ and this library adheres to Rust's notion of
 
 ## [Unreleased]
 ### Changed
+- **Breaking change:** removed the constants `COMPACT_NOTE_SIZE`,
+  `NOTE_PLAINTEXT_SIZE`, and `ENC_CIPHERTEXT_SIZE` as they are now
+  implementation spesific (located in `orchard` and `sapling-crypto` crates).
 - Generalized the note plaintext size to support variable sizes by adding the
   abstract types `NotePlaintextBytes`, `NoteCiphertextBytes`,
   `CompactNotePlaintextBytes`, and `CompactNoteCiphertextBytes` to the `Domain`
   trait.
-- Moved the specific constants into the `Domain` trait implementations.
-
+- Removed the separate `NotePlaintextBytes` type definition (as it is now an
+  associated type).
+- Added new `parse_note_plaintext_bytes`, `parse_note_ciphertext_bytes`, and
+  `parse_compact_note_plaintext_bytes` methods to the `Domain` trait.
+- Updated the `note_plaintext_bytes` method of the `Domain` trait to return the
+  `NotePlaintextBytes` associated type.
+- Updated the `encrypt_note_plaintext` method of `NoteEncryption` to return the
+  `NoteCiphertextBytes` associated type of the `Domain` instead of the explicit
+  array.
+- Updated the `enc_ciphertext` method of the `ShieldedOutput` trait to return an
+  `Option` of a reference instead of a copy.
+- Added a new `note_bytes` module with helper trait and struct to deal with note
+  bytes data with abstracted underlying array size.
+  
 ## [0.4.0] - 2023-06-06
 ### Changed
 - The `esk` and `ephemeral_key` arguments have been removed from 

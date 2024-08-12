@@ -44,27 +44,12 @@ pub mod note_bytes;
 
 use note_bytes::NoteBytes;
 
-/// The size of a compact note for Sapling and Orchard Vanilla.
-pub const COMPACT_NOTE_SIZE: usize = 1 + // version
-    11 + // diversifier
-    8  + // value
-    32; // rseed (or rcm prior to ZIP 212)
-/// The size of `NotePlaintextBytes` for Sapling and Orchard Vanilla.
-pub const NOTE_PLAINTEXT_SIZE: usize = COMPACT_NOTE_SIZE + 512;
-
-/// The size of the memo.
-pub const MEMO_SIZE: usize = 512;
-/// The size of the authentication tag used for note encryption.
-pub const AEAD_TAG_SIZE: usize = 16;
-
 /// The size of [`OutPlaintextBytes`].
 pub const OUT_PLAINTEXT_SIZE: usize = 32 + // pk_d
     32; // esk
+const AEAD_TAG_SIZE: usize = 16;
 /// The size of an encrypted outgoing plaintext.
 pub const OUT_CIPHERTEXT_SIZE: usize = OUT_PLAINTEXT_SIZE + AEAD_TAG_SIZE;
-
-/// The size of an encrypted note plaintext for Sapling and Orchard Vanilla.
-pub const ENC_CIPHERTEXT_SIZE: usize = NOTE_PLAINTEXT_SIZE + AEAD_TAG_SIZE;
 
 /// A symmetric key that can be used to recover a single Sapling or Orchard output.
 pub struct OutgoingCipherKey(pub [u8; 32]);
@@ -270,7 +255,8 @@ pub trait Domain {
         plaintext: &Self::CompactNotePlaintextBytes,
     ) -> Option<(Self::Note, Self::Recipient)>;
 
-    /// Splits the memo field from the given note plaintext.
+    /// Splits the given note plaintext into the compact part (containing the note) and
+    /// the memo field.
     ///
     /// # Compatibility
     ///
@@ -374,7 +360,7 @@ pub trait ShieldedOutput<D: Domain> {
     fn cmstar_bytes(&self) -> D::ExtractedCommitmentBytes;
 
     /// Exposes the note ciphertext of the output. Returns `None` if the output is compact.
-    fn enc_ciphertext(&self) -> Option<D::NoteCiphertextBytes>;
+    fn enc_ciphertext(&self) -> Option<&D::NoteCiphertextBytes>;
 
     // FIXME: Should we return `Option<D::CompactNoteCiphertextBytes>` or
     // `&D::CompactNoteCiphertextBytes` instead? (complexity)?
@@ -383,8 +369,7 @@ pub trait ShieldedOutput<D: Domain> {
 
     //// Splits the AEAD tag from the ciphertext.
     fn split_ciphertext_at_tag(&self) -> Option<(D::NotePlaintextBytes, [u8; AEAD_TAG_SIZE])> {
-        let enc_ciphertext = self.enc_ciphertext()?;
-        let enc_ciphertext_bytes = enc_ciphertext.as_ref();
+        let enc_ciphertext_bytes = self.enc_ciphertext()?.as_ref();
 
         let (plaintext, tail) = enc_ciphertext_bytes
             .len()
