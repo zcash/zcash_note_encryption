@@ -47,7 +47,7 @@ use note_bytes::NoteBytes;
 /// The size of [`OutPlaintextBytes`].
 pub const OUT_PLAINTEXT_SIZE: usize = 32 + // pk_d
     32; // esk
-const AEAD_TAG_SIZE: usize = 16;
+pub const AEAD_TAG_SIZE: usize = 16;
 /// The size of an encrypted outgoing plaintext.
 pub const OUT_CIPHERTEXT_SIZE: usize = OUT_PLAINTEXT_SIZE + AEAD_TAG_SIZE;
 
