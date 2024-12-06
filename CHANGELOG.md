@@ -7,6 +7,9 @@ and this library adheres to Rust's notion of
 
 ## [Unreleased]
 
+### Added
+- `zcash_note_encryption::try_output_recovery_with_pkd_esk`
+
 ## [0.4.0] - 2023-06-06
 ### Changed
 - The `esk` and `ephemeral_key` arguments have been removed from 
