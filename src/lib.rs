@@ -636,8 +636,6 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D, ENC_CIP
     output: &Output,
     out_ciphertext: &[u8; OUT_CIPHERTEXT_SIZE],
 ) -> Option<(D::Note, D::Recipient, D::Memo)> {
-    let enc_ciphertext = output.enc_ciphertext();
-
     let mut op = OutPlaintextBytes([0; OUT_PLAINTEXT_SIZE]);
     op.0.copy_from_slice(&out_ciphertext[..OUT_PLAINTEXT_SIZE]);
 
@@ -653,6 +651,27 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D, ENC_CIP
     let pk_d = D::extract_pk_d(&op)?;
     let esk = D::extract_esk(&op)?;
 
+    try_output_recovery_with_pkd_esk(domain, pk_d, esk, output)
+}
+
+/// Recovery of the full note plaintext by the sender.
+///
+/// Attempts to decrypt and validate the given shielded output using the given `pk_d` and `esk`. If
+/// successful, the corresponding note and memo are returned, along with the address to which the
+/// note was sent.
+///
+/// Implements part of section 4.19.3 of the
+/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptovk).
+/// For decryption using a Full Viewing Key see [`try_output_recovery_with_ovk`].
+pub fn try_output_recovery_with_pkd_esk<
+    D: Domain,
+    Output: ShieldedOutput<D, ENC_CIPHERTEXT_SIZE>,
+>(
+    domain: &D,
+    pk_d: D::DiversifiedTransmissionKey,
+    esk: D::EphemeralSecretKey,
+    output: &Output,
+) -> Option<(D::Note, D::Recipient, D::Memo)> {
     let ephemeral_key = output.ephemeral_key();
     let shared_secret = D::ka_agree_enc(&esk, &pk_d);
     // The small-order point check at the point of output parsing rejects
@@ -660,6 +679,7 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D, ENC_CIP
     // be okay.
     let key = D::kdf(shared_secret, &ephemeral_key);
 
+    let enc_ciphertext = output.enc_ciphertext();
     let mut plaintext = NotePlaintextBytes([0; NOTE_PLAINTEXT_SIZE]);
     plaintext
         .0
