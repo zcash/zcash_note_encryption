@@ -7,6 +7,7 @@ and this library adheres to Rust's notion of
 
 ## [Unreleased]
 
+## [0.4.1] - 2024-12-06
 ### Added
 - `zcash_note_encryption::try_output_recovery_with_pkd_esk`
 
