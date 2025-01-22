@@ -368,17 +368,24 @@ pub trait ShieldedOutput<D: Domain> {
     fn enc_ciphertext_compact(&self) -> D::CompactNoteCiphertextBytes;
 
     //// Splits the AEAD tag from the ciphertext.
+    ///
+    /// Returns `None` if the output is compact.
     fn split_ciphertext_at_tag(&self) -> Option<(D::NotePlaintextBytes, [u8; AEAD_TAG_SIZE])> {
         let enc_ciphertext_bytes = self.enc_ciphertext()?.as_ref();
 
-        let (plaintext, tail) = enc_ciphertext_bytes
+        let tag_loc = enc_ciphertext_bytes
             .len()
             .checked_sub(AEAD_TAG_SIZE)
-            .map(|tag_loc| enc_ciphertext_bytes.split_at(tag_loc))?;
+            .expect("D::CompactNoteCiphertextBytes should be at least AEAD_TAG_SIZE bytes");
+        let (plaintext, tail) = enc_ciphertext_bytes.split_at(tag_loc);
 
         let tag: [u8; AEAD_TAG_SIZE] = tail.try_into().expect("the length of the tag is correct");
 
-        D::parse_note_plaintext_bytes(plaintext).map(|plaintext| (plaintext, tag))
+        Some((
+            D::parse_note_plaintext_bytes(plaintext)
+                .expect("D::NoteCiphertextBytes and D::NotePlaintextBytes should be consistent"),
+            tag,
+        ))
     }
 }
 
