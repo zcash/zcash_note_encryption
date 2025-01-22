@@ -9,7 +9,7 @@ and this library adheres to Rust's notion of
 ### Changed
 - **Breaking change:** removed the constants `COMPACT_NOTE_SIZE`,
   `NOTE_PLAINTEXT_SIZE`, and `ENC_CIPHERTEXT_SIZE` as they are now
-  implementation spesific (located in `orchard` and `sapling-crypto` crates).
+  implementation-specific (located in `orchard` and `sapling-crypto` crates).
 - Generalized the note plaintext size to support variable sizes by adding the
   abstract types `NotePlaintextBytes`, `NoteCiphertextBytes`,
   `CompactNotePlaintextBytes`, and `CompactNoteCiphertextBytes` to the `Domain`

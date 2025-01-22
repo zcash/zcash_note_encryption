@@ -281,7 +281,7 @@ pub trait Domain {
 
     /// Parses the given note plaintext bytes.
     ///
-    /// Returns `None` if the byte slice does not represent a valid note plaintext.
+    /// Returns `None` if the byte slice has the wrong length for a note plaintext.
     fn parse_note_plaintext_bytes(plaintext: &[u8]) -> Option<Self::NotePlaintextBytes> {
         Self::NotePlaintextBytes::from_slice(plaintext)
     }
@@ -290,7 +290,7 @@ pub trait Domain {
     ///
     /// `output` is the ciphertext bytes, and `tag` is the authentication tag.
     ///
-    /// Returns `None` if the byte slice does not represent a valid note ciphertext.
+    /// Returns `None` if the `output` byte slice has the wrong length for a note ciphertext.
     fn parse_note_ciphertext_bytes(
         output: &[u8],
         tag: [u8; AEAD_TAG_SIZE],
@@ -300,7 +300,7 @@ pub trait Domain {
 
     /// Parses the given compact note plaintext bytes.
     ///
-    /// Returns `None` if the byte slice does not represent a valid compact note plaintext.
+    /// Returns `None` if the byte slice has the wrong length for a compact note plaintext.
     fn parse_compact_note_plaintext_bytes(
         plaintext: &[u8],
     ) -> Option<Self::CompactNotePlaintextBytes> {

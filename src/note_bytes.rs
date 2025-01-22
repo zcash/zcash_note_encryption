@@ -26,8 +26,7 @@ pub trait NoteBytes: AsRef<[u8]> + AsMut<[u8]> + Clone + Copy {
 
 impl<const N: usize> NoteBytes for NoteBytesData<N> {
     fn from_slice(bytes: &[u8]) -> Option<NoteBytesData<N>> {
-        let data = bytes.try_into().ok()?;
-        Some(NoteBytesData(data))
+        bytes.try_into().ok().map(NoteBytesData)
     }
 
     fn from_slice_with_tag<const TAG_SIZE: usize>(
