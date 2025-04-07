@@ -5,11 +5,11 @@
 //! and trial decryption logic, and enforce protocol-agnostic verification requirements.
 //!
 //! Protocol-specific logic is handled via the [`Domain`] trait. Implementations of this
-//! trait are provided in the [`zcash_primitives`] (for Sapling) and [`orchard`] crates;
-//! users with their own existing types can similarly implement the trait themselves.
+//! trait are provided in the [`sapling-crypto`] and [`orchard`] crates; users with their
+//! own existing types can similarly implement the trait themselves.
 //!
 //! [in-band secret distribution scheme]: https://zips.z.cash/protocol/protocol.pdf#saplingandorchardinband
-//! [`zcash_primitives`]: https://crates.io/crates/zcash_primitives
+//! [`sapling-crypto`]: https://crates.io/crates/sapling-crypto
 //! [`orchard`]: https://crates.io/crates/orchard
 
 #![no_std]
