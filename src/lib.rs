@@ -334,8 +334,13 @@ pub trait ShieldedOutput<D: Domain, const CIPHERTEXT_SIZE: usize> {
     /// Exposes the `ephemeral_key` field of the output.
     fn ephemeral_key(&self) -> EphemeralKeyBytes;
 
-    /// Exposes the `cmu_bytes` or `cmx_bytes` field of the output.
-    fn cmstar_bytes(&self) -> D::ExtractedCommitmentBytes;
+    /// Exposes the `cmu` or `cmx` field of the output.
+    fn cmstar(&self) -> &D::ExtractedCommitment;
+
+    /// Exposes the `cmu_bytes` or `cmx_bytes` representation of the output.
+    fn cmstar_bytes(&self) -> D::ExtractedCommitmentBytes {
+        D::ExtractedCommitmentBytes::from(self.cmstar())
+    }
 
     /// Exposes the note ciphertext of the output.
     fn enc_ciphertext(&self) -> &[u8; CIPHERTEXT_SIZE];
