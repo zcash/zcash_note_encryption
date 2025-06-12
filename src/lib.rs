@@ -346,6 +346,24 @@ pub trait ShieldedOutput<D: Domain, const CIPHERTEXT_SIZE: usize> {
     fn enc_ciphertext(&self) -> &[u8; CIPHERTEXT_SIZE];
 }
 
+impl<D, O, const CIPHERTEXT_SIZE: usize> ShieldedOutput<D, CIPHERTEXT_SIZE> for &O
+where
+    D: Domain,
+    O: ShieldedOutput<D, CIPHERTEXT_SIZE>,
+{
+    fn ephemeral_key(&self) -> EphemeralKeyBytes {
+        (*self).ephemeral_key()
+    }
+
+    fn cmstar(&self) -> &<D as Domain>::ExtractedCommitment {
+        (*self).cmstar()
+    }
+
+    fn enc_ciphertext(&self) -> &[u8; CIPHERTEXT_SIZE] {
+        (*self).enc_ciphertext()
+    }
+}
+
 /// A struct containing context required for encrypting Sapling and Orchard notes.
 ///
 /// This struct provides a safe API for encrypting Sapling and Orchard notes. In particular, it

@@ -6,6 +6,10 @@ and this library adheres to Rust's notion of
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- A blanket `impl<D, O, const CIPHERTEXT_SIZE: usize> ShieldedOutput<D, CIPHERTEXT_SIZE> for &O`
+    where `D: Domain, O: ShieldedOutput<D, CIPHERTEXT_SIZE>`
+
 ### Changed
 - `ShieldedOutput` has added method `cmstar`, which exposes the
   `ExtractedCommitment` of the shielded output directly, in addition to the
