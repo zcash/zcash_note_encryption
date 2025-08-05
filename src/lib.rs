@@ -356,8 +356,13 @@ pub trait ShieldedOutput<D: Domain> {
     /// Exposes the `ephemeral_key` field of the output.
     fn ephemeral_key(&self) -> EphemeralKeyBytes;
 
-    /// Exposes the `cmu_bytes` or `cmx_bytes` field of the output.
-    fn cmstar_bytes(&self) -> D::ExtractedCommitmentBytes;
+    /// Exposes the `cmu` or `cmx` field of the output.
+    fn cmstar(&self) -> &D::ExtractedCommitment;
+
+    /// Exposes the `cmu_bytes` or `cmx_bytes` representation of the output.
+    fn cmstar_bytes(&self) -> D::ExtractedCommitmentBytes {
+        D::ExtractedCommitmentBytes::from(self.cmstar())
+    }
 
     /// Exposes the note ciphertext of the output. Returns `None` if the output is compact.
     fn enc_ciphertext(&self) -> Option<&D::NoteCiphertextBytes>;
@@ -386,6 +391,28 @@ pub trait ShieldedOutput<D: Domain> {
                 .expect("D::NoteCiphertextBytes and D::NotePlaintextBytes should be consistent"),
             tag,
         ))
+    }
+}
+
+impl<D, O> ShieldedOutput<D> for &O
+where
+    D: Domain,
+    O: ShieldedOutput<D>,
+{
+    fn ephemeral_key(&self) -> EphemeralKeyBytes {
+        (*self).ephemeral_key()
+    }
+
+    fn cmstar(&self) -> &<D as Domain>::ExtractedCommitment {
+        (*self).cmstar()
+    }
+
+    fn enc_ciphertext(&self) -> Option<&<D as Domain>::NoteCiphertextBytes> {
+        (*self).enc_ciphertext()
+    }
+
+    fn enc_ciphertext_compact(&self) -> <D as Domain>::CompactNoteCiphertextBytes {
+        (*self).enc_ciphertext_compact()
     }
 }
 

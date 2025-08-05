@@ -6,6 +6,10 @@ and this library adheres to Rust's notion of
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- A blanket `impl<D, O, const CIPHERTEXT_SIZE: usize> ShieldedOutput<D, CIPHERTEXT_SIZE> for &O`
+    where `D: Domain, O: ShieldedOutput<D, CIPHERTEXT_SIZE>`
+
 ### Changed
 - **Breaking change:** removed the constants `COMPACT_NOTE_SIZE`,
   `NOTE_PLAINTEXT_SIZE`, and `ENC_CIPHERTEXT_SIZE` as they are now
@@ -27,6 +31,10 @@ and this library adheres to Rust's notion of
   `Option` of a reference instead of a copy.
 - Added a new `note_bytes` module with helper trait and struct to deal with note
   bytes data with abstracted underlying array size.
+- `ShieldedOutput` has added method `cmstar`, which exposes the
+  `ExtractedCommitment` of the shielded output directly, in addition to the
+  byte encoding exposed by `ShieldedOutput::cmstar_bytes`. This is useful for
+  further generalizing scanning code.
 
 ## [0.4.1] - 2024-12-06
 ### Added
@@ -34,7 +42,7 @@ and this library adheres to Rust's notion of
 
 ## [0.4.0] - 2023-06-06
 ### Changed
-- The `esk` and `ephemeral_key` arguments have been removed from 
+- The `esk` and `ephemeral_key` arguments have been removed from
   `Domain::parse_note_plaintext_without_memo_ovk`. It is therefore no longer
   necessary (or possible) to ensure that `ephemeral_key` is derived from `esk`
   and the diversifier within the note plaintext. We have analyzed the safety of
@@ -46,7 +54,7 @@ and this library adheres to Rust's notion of
 ## [0.3.0] - 2023-03-22
 ### Changed
 - The `recipient` parameter has been removed from `Domain::note_plaintext_bytes`.
-- The `recipient` parameter has been removed from `NoteEncryption::new`. Since 
+- The `recipient` parameter has been removed from `NoteEncryption::new`. Since
   the `Domain::Note` type is now expected to contain information about the
   recipient of the note, there is no longer any need to pass this information
   in via the encryption context.
