@@ -17,7 +17,7 @@
 // Catch documentation errors caused by code changes.
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(unsafe_code)]
-// TODO: #![deny(missing_docs)]
+#![deny(missing_docs)]
 
 use core::fmt::{self, Write};
 
