@@ -373,7 +373,7 @@ pub trait ShieldedOutput<D: Domain> {
     /// Exposes the compact note ciphertext of the output.
     fn enc_ciphertext_compact(&self) -> D::CompactNoteCiphertextBytes;
 
-    //// Splits the AEAD tag from the ciphertext.
+    /// Splits the AEAD tag from the ciphertext.
     ///
     /// Returns `None` if the output is compact.
     fn split_ciphertext_at_tag(&self) -> Option<(D::NotePlaintextBytes, [u8; AEAD_TAG_SIZE])> {
