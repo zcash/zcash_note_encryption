@@ -124,6 +124,13 @@ enum NoteValidity {
 ///
 /// This trait enables most of the note encryption logic to be shared between Sapling and
 /// Orchard, as well as between different implementations of those protocols.
+///
+/// Concrete implementations are provided for Sapling and Orchard in their respective
+/// `note_encryption` modules: [`SaplingDomain`][sapling-impl] and
+/// [`OrchardDomain`][orchard-impl].
+///
+/// [sapling-impl]: https://github.com/zcash/sapling-crypto/blob/main/src/note_encryption.rs
+/// [orchard-impl]: https://github.com/zcash/orchard/blob/main/src/note_encryption.rs
 pub trait Domain {
     /// The ephemeral secret key used to derive the shared secret.
     type EphemeralSecretKey: ConstantTimeEq;
