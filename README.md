@@ -8,7 +8,7 @@ Protocol-specific logic is handled via the `Domain` trait. Implementations of th
 trait are provided in the [`sapling-crypto`] and [`orchard`] crates; users with their
 own existing types can similarly implement the trait themselves.
 
-[in-band secret distribution scheme]: https://zips.z.cash/protocol/protocol.pdf#saplingandorchardinband
+[in-band secret distribution scheme]: https://zips.z.cash/protocol/nu5.pdf#saplingandorchardinband
 [`sapling-crypto`]: https://crates.io/crates/sapling-crypto
 [`orchard`]: https://crates.io/crates/orchard
 

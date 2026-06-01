@@ -8,7 +8,7 @@
 //! trait are provided in the [`sapling-crypto`] and [`orchard`] crates; users with their
 //! own existing types can similarly implement the trait themselves.
 //!
-//! [in-band secret distribution scheme]: https://zips.z.cash/protocol/protocol.pdf#saplingandorchardinband
+//! [in-band secret distribution scheme]: https://zips.z.cash/protocol/nu5.pdf#saplingandorchardinband
 //! [`sapling-crypto`]: https://crates.io/crates/sapling-crypto
 //! [`orchard`]: https://crates.io/crates/orchard
 
@@ -751,7 +751,7 @@ pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
 
     // ZIP 212: Check that the esk provided to this function is consistent with the esk we can
     // derive from the note. This check corresponds to `ToScalar(PRF^{expand}_{rseed}([4]) = esk`
-    // in https://zips.z.cash/protocol/protocol.pdf#decryptovk. (`ρ^opt = []` for Sapling.)
+    // in https://zips.z.cash/protocol/nu5.pdf#decryptovk. (`ρ^opt = []` for Sapling.)
     if let Some(derived_esk) = D::derive_esk(&note) {
         if (!derived_esk.ct_eq(&esk)).into() {
             return None;
