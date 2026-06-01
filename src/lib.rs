@@ -423,8 +423,8 @@ where
 /// enforces that fresh ephemeral keys are used for every note, and that the ciphertexts are
 /// consistent with each other.
 ///
-/// Implements section 4.19 of the
-/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#saplingandorchardinband)
+/// Implements section 4.20.1: Encryption (Sapling and Orchard) of the
+/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#saplingandorchardencrypt)
 pub struct NoteEncryption<D: Domain> {
     epk: D::EphemeralPublicKey,
     esk: D::EphemeralSecretKey,
@@ -533,7 +533,7 @@ impl<D: Domain> NoteEncryption<D> {
 /// If successful, the corresponding note and memo are returned, along with the address to
 /// which the note was sent.
 ///
-/// Implements section 4.19.2 of the
+/// Implements section 4.20.2 of the
 /// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptivk).
 pub fn try_note_decryption<D: Domain, Output: ShieldedOutput<D>>(
     domain: &D,
@@ -596,7 +596,7 @@ fn check_note_validity<D: Domain>(
     cmstar_bytes: &D::ExtractedCommitmentBytes,
 ) -> NoteValidity {
     if &D::ExtractedCommitmentBytes::from(&D::cmstar(note)) == cmstar_bytes {
-        // In the case corresponding to specification section 4.19.3, we check that `esk` is equal
+        // In the case corresponding to specification section 4.20.3, we check that `esk` is equal
         // to `D::derive_esk(note)` prior to calling this method.
         if let Some(derived_esk) = D::derive_esk(note) {
             if D::epk_bytes(&D::ka_derive_public(note, &derived_esk))
@@ -670,7 +670,7 @@ fn try_compact_note_decryption_inner<D: Domain, Output: ShieldedOutput<D>>(
 /// If successful, the corresponding note and memo are returned, along with the address to
 /// which the note was sent.
 ///
-/// Implements [Zcash Protocol Specification section 4.19.3][decryptovk].
+/// Implements [Zcash Protocol Specification section 4.20.3][decryptovk].
 ///
 /// [decryptovk]: https://zips.z.cash/protocol/nu5.pdf#decryptovk
 pub fn try_output_recovery_with_ovk<D: Domain, Output: ShieldedOutput<D>>(
@@ -690,7 +690,7 @@ pub fn try_output_recovery_with_ovk<D: Domain, Output: ShieldedOutput<D>>(
 /// If successful, the corresponding note and memo are returned, along with the address to
 /// which the note was sent.
 ///
-/// Implements part of section 4.19.3 of the
+/// Implements part of section 4.20.3 of the
 /// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptovk).
 /// For decryption using a Full Viewing Key see [`try_output_recovery_with_ovk`].
 pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
@@ -723,7 +723,7 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
 /// successful, the corresponding note and memo are returned, along with the address to which the
 /// note was sent.
 ///
-/// Implements part of section 4.19.3 of the
+/// Implements part of section 4.20.3 of the
 /// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptovk).
 /// For decryption using a Full Viewing Key see [`try_output_recovery_with_ovk`].
 pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
