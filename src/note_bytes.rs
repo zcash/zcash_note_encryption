@@ -16,8 +16,11 @@ impl<const N: usize> AsMut<[u8]> for NoteBytesData<N> {
 
 /// Provides a unified interface for handling fixed-size byte arrays used in note encryption.
 pub trait NoteBytes: AsRef<[u8]> + AsMut<[u8]> + Clone + Copy {
+    /// Constructs a value from a byte slice, returning `None` if the length does not match.
     fn from_slice(bytes: &[u8]) -> Option<Self>;
 
+    /// Constructs a value by concatenating `output` with `tag`, returning `None` if the
+    /// combined length does not match.
     fn from_slice_with_tag<const TAG_SIZE: usize>(
         output: &[u8],
         tag: [u8; TAG_SIZE],

@@ -40,6 +40,7 @@ use subtle::{Choice, ConstantTimeEq};
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub mod batch;
 
+/// Types and traits for handling fixed-size byte arrays used in note encryption.
 pub mod note_bytes;
 
 use note_bytes::NoteBytes;
