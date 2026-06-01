@@ -48,6 +48,7 @@ use note_bytes::NoteBytes;
 /// The size of [`OutPlaintextBytes`].
 pub const OUT_PLAINTEXT_SIZE: usize = 32 + // pk_d
     32; // esk
+/// The size of the authentication tag used by the AEAD.
 pub const AEAD_TAG_SIZE: usize = 16;
 /// The size of an encrypted outgoing plaintext.
 pub const OUT_CIPHERTEXT_SIZE: usize = OUT_PLAINTEXT_SIZE + AEAD_TAG_SIZE;
@@ -124,24 +125,52 @@ enum NoteValidity {
 /// This trait enables most of the note encryption logic to be shared between Sapling and
 /// Orchard, as well as between different implementations of those protocols.
 pub trait Domain {
+    /// The ephemeral secret key used to derive the shared secret.
     type EphemeralSecretKey: ConstantTimeEq;
+    /// The ephemeral public key transmitted with the output.
     type EphemeralPublicKey;
+    /// A precomputed form of [`Self::EphemeralPublicKey`] for key agreement.
     type PreparedEphemeralPublicKey;
+    /// The shared secret produced by Diffie-Hellman key agreement.
     type SharedSecret;
+    /// The symmetric key derived from the shared secret.
     type SymmetricKey: AsRef<[u8]>;
+    /// The note being encrypted.
     type Note;
+    /// The recipient of the note.
     type Recipient;
+    /// The diversified transmission key of the recipient.
     type DiversifiedTransmissionKey;
+    /// The incoming viewing key used to decrypt notes by the recipient.
+    ///
+    /// See [section 4.20.2: Decryption using an Incoming Viewing Key (Sapling and
+    /// Orchard)][decryptivk] of the Zcash Protocol Specification.
+    ///
+    /// [decryptivk]: https://zips.z.cash/protocol/nu5.pdf#decryptivk
     type IncomingViewingKey;
+    /// The outgoing viewing key used to decrypt notes by the sender.
+    ///
+    /// See [section 4.20.3: Decryption using an Outgoing Viewing Key (Sapling and
+    /// Orchard)][decryptovk] of the Zcash Protocol Specification.
+    ///
+    /// [decryptovk]: https://zips.z.cash/protocol/nu5.pdf#decryptovk
     type OutgoingViewingKey;
+    /// The commitment to the value of the note.
     type ValueCommitment;
+    /// The note commitment.
     type ExtractedCommitment;
+    /// The byte representation of an [`Self::ExtractedCommitment`].
     type ExtractedCommitmentBytes: Eq + for<'a> From<&'a Self::ExtractedCommitment>;
+    /// The memo field associated with the note.
     type Memo;
 
+    /// The byte representation of a note plaintext.
     type NotePlaintextBytes: NoteBytes;
+    /// The byte representation of an encrypted note.
     type NoteCiphertextBytes: NoteBytes;
+    /// The byte representation of a compact note plaintext.
     type CompactNotePlaintextBytes: NoteBytes;
+    /// The byte representation of an encrypted compact note.
     type CompactNoteCiphertextBytes: NoteBytes;
 
     /// Derives the `EphemeralSecretKey` corresponding to this note.
