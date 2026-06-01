@@ -69,6 +69,20 @@ jobs:
           working-directory: ${{ inputs.target }}
           deny: warnings
 
+  clippy-beta:
+    name: Clippy (beta)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - id: toolchain
+        uses: dtolnay/rust-toolchain@beta
+        with:
+          components: clippy
+      - run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Run Clippy (beta)
+        run: cargo clippy --all-features --all-targets -- -W clippy::all
+
   doc-links:
     name: Intra-doc links
     runs-on: ubuntu-latest
