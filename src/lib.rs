@@ -8,7 +8,7 @@
 //! trait are provided in the [`sapling-crypto`] and [`orchard`] crates; users with their
 //! own existing types can similarly implement the trait themselves.
 //!
-//! [in-band secret distribution scheme]: https://zips.z.cash/protocol/protocol.pdf#saplingandorchardinband
+//! [in-band secret distribution scheme]: https://zips.z.cash/protocol/nu5.pdf#saplingandorchardinband
 //! [`sapling-crypto`]: https://crates.io/crates/sapling-crypto
 //! [`orchard`]: https://crates.io/crates/orchard
 
@@ -17,7 +17,7 @@
 // Catch documentation errors caused by code changes.
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(unsafe_code)]
-// TODO: #![deny(missing_docs)]
+#![deny(missing_docs)]
 
 use core::fmt::{self, Write};
 
@@ -40,6 +40,7 @@ use subtle::{Choice, ConstantTimeEq};
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub mod batch;
 
+/// Types and traits for handling fixed-size byte arrays used in note encryption.
 pub mod note_bytes;
 
 use note_bytes::NoteBytes;
@@ -47,6 +48,7 @@ use note_bytes::NoteBytes;
 /// The size of [`OutPlaintextBytes`].
 pub const OUT_PLAINTEXT_SIZE: usize = 32 + // pk_d
     32; // esk
+/// The size of the authentication tag used by the AEAD.
 pub const AEAD_TAG_SIZE: usize = 16;
 /// The size of an encrypted outgoing plaintext.
 pub const OUT_CIPHERTEXT_SIZE: usize = OUT_PLAINTEXT_SIZE + AEAD_TAG_SIZE;
@@ -122,25 +124,60 @@ enum NoteValidity {
 ///
 /// This trait enables most of the note encryption logic to be shared between Sapling and
 /// Orchard, as well as between different implementations of those protocols.
+///
+/// Concrete implementations are provided for Sapling and Orchard in their respective
+/// `note_encryption` modules: [`SaplingDomain`][sapling-impl] and
+/// [`OrchardDomain`][orchard-impl].
+///
+/// [sapling-impl]: https://github.com/zcash/sapling-crypto/blob/main/src/note_encryption.rs
+/// [orchard-impl]: https://github.com/zcash/orchard/blob/main/src/note_encryption.rs
 pub trait Domain {
+    /// The ephemeral secret key used to derive the shared secret.
     type EphemeralSecretKey: ConstantTimeEq;
+    /// The ephemeral public key transmitted with the output.
     type EphemeralPublicKey;
+    /// A precomputed form of [`Self::EphemeralPublicKey`] for key agreement.
     type PreparedEphemeralPublicKey;
+    /// The shared secret produced by Diffie-Hellman key agreement.
     type SharedSecret;
+    /// The symmetric key derived from the shared secret.
     type SymmetricKey: AsRef<[u8]>;
+    /// The note being encrypted.
     type Note;
+    /// The recipient of the note.
     type Recipient;
+    /// The diversified transmission key of the recipient.
     type DiversifiedTransmissionKey;
+    /// The incoming viewing key used to decrypt notes by the recipient.
+    ///
+    /// See [section 4.20.2: Decryption using an Incoming Viewing Key (Sapling and
+    /// Orchard)][decryptivk] of the Zcash Protocol Specification.
+    ///
+    /// [decryptivk]: https://zips.z.cash/protocol/nu5.pdf#decryptivk
     type IncomingViewingKey;
+    /// The outgoing viewing key used to decrypt notes by the sender.
+    ///
+    /// See [section 4.20.3: Decryption using an Outgoing Viewing Key (Sapling and
+    /// Orchard)][decryptovk] of the Zcash Protocol Specification.
+    ///
+    /// [decryptovk]: https://zips.z.cash/protocol/nu5.pdf#decryptovk
     type OutgoingViewingKey;
+    /// The commitment to the value of the note.
     type ValueCommitment;
+    /// The note commitment.
     type ExtractedCommitment;
+    /// The byte representation of an [`Self::ExtractedCommitment`].
     type ExtractedCommitmentBytes: Eq + for<'a> From<&'a Self::ExtractedCommitment>;
+    /// The memo field associated with the note.
     type Memo;
 
+    /// The byte representation of a note plaintext.
     type NotePlaintextBytes: NoteBytes;
+    /// The byte representation of an encrypted note.
     type NoteCiphertextBytes: NoteBytes;
+    /// The byte representation of a compact note plaintext.
     type CompactNotePlaintextBytes: NoteBytes;
+    /// The byte representation of an encrypted compact note.
     type CompactNoteCiphertextBytes: NoteBytes;
 
     /// Derives the `EphemeralSecretKey` corresponding to this note.
@@ -395,7 +432,7 @@ pub trait ShieldedOutput<D: Domain> {
     /// Exposes the compact note ciphertext of the output.
     fn enc_ciphertext_compact(&self) -> D::CompactNoteCiphertextBytes;
 
-    //// Splits the AEAD tag from the ciphertext.
+    /// Splits the AEAD tag from the ciphertext.
     ///
     /// Returns `None` if the output is compact.
     fn split_ciphertext_at_tag(&self) -> Option<(D::NotePlaintextBytes, [u8; AEAD_TAG_SIZE])> {
@@ -445,8 +482,8 @@ where
 /// enforces that fresh ephemeral keys are used for every note, and that the ciphertexts are
 /// consistent with each other.
 ///
-/// Implements section 4.19 of the
-/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#saplingandorchardinband)
+/// Implements section 4.20.1: Encryption (Sapling and Orchard) of the
+/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#saplingandorchardencrypt)
 pub struct NoteEncryption<D: Domain> {
     epk: D::EphemeralPublicKey,
     esk: D::EphemeralSecretKey,
@@ -555,7 +592,7 @@ impl<D: Domain> NoteEncryption<D> {
 /// If successful, the corresponding note and memo are returned, along with the address to
 /// which the note was sent.
 ///
-/// Implements section 4.19.2 of the
+/// Implements section 4.20.2 of the
 /// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptivk).
 pub fn try_note_decryption<D: Domain, Output: ShieldedOutput<D>>(
     domain: &D,
@@ -618,7 +655,7 @@ fn check_note_validity<D: Domain>(
     cmstar_bytes: &D::ExtractedCommitmentBytes,
 ) -> NoteValidity {
     if &D::ExtractedCommitmentBytes::from(&D::cmstar(note)) == cmstar_bytes {
-        // In the case corresponding to specification section 4.19.3, we check that `esk` is equal
+        // In the case corresponding to specification section 4.20.3, we check that `esk` is equal
         // to `D::derive_esk(note)` prior to calling this method.
         if let Some(derived_esk) = D::derive_esk(note) {
             if D::epk_bytes(&D::ka_derive_public(note, &derived_esk))
@@ -692,7 +729,7 @@ fn try_compact_note_decryption_inner<D: Domain, Output: ShieldedOutput<D>>(
 /// If successful, the corresponding note and memo are returned, along with the address to
 /// which the note was sent.
 ///
-/// Implements [Zcash Protocol Specification section 4.19.3][decryptovk].
+/// Implements [Zcash Protocol Specification section 4.20.3][decryptovk].
 ///
 /// [decryptovk]: https://zips.z.cash/protocol/nu5.pdf#decryptovk
 pub fn try_output_recovery_with_ovk<D: Domain, Output: ShieldedOutput<D>>(
@@ -712,7 +749,7 @@ pub fn try_output_recovery_with_ovk<D: Domain, Output: ShieldedOutput<D>>(
 /// If successful, the corresponding note and memo are returned, along with the address to
 /// which the note was sent.
 ///
-/// Implements part of section 4.19.3 of the
+/// Implements part of section 4.20.3 of the
 /// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptovk).
 /// For decryption using a Full Viewing Key see [`try_output_recovery_with_ovk`].
 pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
@@ -745,7 +782,7 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
 /// successful, the corresponding note and memo are returned, along with the address to which the
 /// note was sent.
 ///
-/// Implements part of section 4.19.3 of the
+/// Implements part of section 4.20.3 of the
 /// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptovk).
 /// For decryption using a Full Viewing Key see [`try_output_recovery_with_ovk`].
 pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
@@ -773,7 +810,7 @@ pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
 
     // ZIP 212: Check that the esk provided to this function is consistent with the esk we can
     // derive from the note. This check corresponds to `ToScalar(PRF^{expand}_{rseed}([4]) = esk`
-    // in https://zips.z.cash/protocol/protocol.pdf#decryptovk. (`ρ^opt = []` for Sapling.)
+    // in https://zips.z.cash/protocol/nu5.pdf#decryptovk. (`ρ^opt = []` for Sapling.)
     if let Some(derived_esk) = D::derive_esk(&note) {
         if (!derived_esk.ct_eq(&esk)).into() {
             return None;
