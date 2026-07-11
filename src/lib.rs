@@ -323,6 +323,29 @@ pub trait BatchDomain: Domain {
             })
             .collect()
     }
+
+    /// Computes `Self::ka_agree_dec` on a batch of prepared ephemeral keys against a
+    /// single incoming viewing key.
+    ///
+    /// For each item, if the prepared ephemeral key is `None` (i.e. its encoding could
+    /// not be parsed), this returns `None` at that position.
+    ///
+    /// Trial decryption multiplies many ephemeral keys by the same viewing key, so
+    /// domains for which same-scalar multiplications can share work (for example,
+    /// lockstep ladders over a shared batched field inversion) can override this to
+    /// reduce the cost of the scalar multiplications, which dominate batched trial
+    /// decryption. The default implementation performs the per-item computation.
+    fn batch_ka_agree_dec<'a>(
+        ivk: &Self::IncomingViewingKey,
+        epks: impl Iterator<Item = Option<&'a Self::PreparedEphemeralPublicKey>>,
+    ) -> Vec<Option<Self::SharedSecret>>
+    where
+        Self::PreparedEphemeralPublicKey: 'a,
+    {
+        // Default implementation: do the non-batched thing.
+        epks.map(|epk| epk.map(|epk| Self::ka_agree_dec(ivk, epk)))
+            .collect()
+    }
 }
 
 /// Trait that provides access to the components of an encrypted transaction output.
