@@ -9,6 +9,13 @@ and this library adheres to Rust's notion of
 ### Added
 - A blanket `impl<D, O, const CIPHERTEXT_SIZE: usize> ShieldedOutput<D, CIPHERTEXT_SIZE> for &O`
     where `D: Domain, O: ShieldedOutput<D, CIPHERTEXT_SIZE>`
+- `BatchDomain::batch_ka_agree_dec`, a provided method that computes
+  `Domain::ka_agree_dec` for a batch of prepared ephemeral keys against a single
+  incoming viewing key. Domains for which same-scalar multiplications can share
+  work can override it; the default implementation (and therefore the behavior
+  of existing `BatchDomain` implementations) is the per-item computation. The
+  batch decryption functions in the `batch` module now derive their shared
+  secrets through this method, one call per viewing key.
 
 ### Changed
 - **Breaking change:** removed the constants `COMPACT_NOTE_SIZE`,
