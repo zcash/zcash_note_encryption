@@ -33,7 +33,7 @@ use chacha20::{
 use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305, KeyInit};
 use cipher::KeyIvInit;
 
-use rand_core::RngCore;
+use rand_core::Rng;
 use subtle::{Choice, ConstantTimeEq};
 
 #[cfg(feature = "alloc")]
@@ -79,7 +79,7 @@ impl fmt::Debug for EphemeralKeyBytes {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 f.write_char('"')?;
                 for b in self.0 {
-                    f.write_fmt(format_args!("{:02x}", b))?;
+                    f.write_fmt(format_args!("{b:02x}"))?;
                 }
                 f.write_char('"')
             }
@@ -516,7 +516,7 @@ impl<D: Domain> NoteEncryption<D> {
     }
 
     /// Generates `outCiphertext` for this note.
-    pub fn encrypt_outgoing_plaintext<R: RngCore>(
+    pub fn encrypt_outgoing_plaintext<R: Rng>(
         &self,
         cv: &D::ValueCommitment,
         cmstar: &D::ExtractedCommitment,
