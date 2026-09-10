@@ -32,6 +32,7 @@ and this library adheres to Rust's notion of
   `ExtractedCommitment` of the shielded output directly, in addition to the
   byte encoding exposed by `ShieldedOutput::cmstar_bytes`. This is useful for
   further generalizing scanning code.
+- MSRV is now 1.88.
 
 ## [0.4.2] - 2026-07-11
 
