@@ -82,7 +82,7 @@ where
     let items = secrets.into_iter().zip(
         ephemeral_keys
             .iter()
-            .flat_map(|(_, ephemeral_key)| core::iter::repeat(ephemeral_key).take(ivks.len())),
+            .flat_map(|(_, ephemeral_key)| core::iter::repeat_n(ephemeral_key, ivks.len())),
     );
 
     // Run the batch-KDF to obtain the symmetric keys from the shared secrets.

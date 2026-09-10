@@ -32,6 +32,11 @@ and this library adheres to Rust's notion of
   `ExtractedCommitment` of the shielded output directly, in addition to the
   byte encoding exposed by `ShieldedOutput::cmstar_bytes`. This is useful for
   further generalizing scanning code.
+- MSRV is now 1.88.
+- **Breaking change:** migrated to `rand_core 0.10`. The
+  `NoteEncryption::encrypt_outgoing_plaintext` method now requires its `rng`
+  argument to implement `rand_core::Rng` instead of `rand_core::RngCore`, as
+  the latter trait is deprecated in `rand_core 0.10`.
 
 ## [0.4.2] - 2026-07-11
 
