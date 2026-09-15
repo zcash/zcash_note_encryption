@@ -5,38 +5,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this library adheres to Rust's notion of
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-09-15
 
-### Changed
-- **Breaking change:** removed the constants `COMPACT_NOTE_SIZE`,
-  `NOTE_PLAINTEXT_SIZE`, and `ENC_CIPHERTEXT_SIZE` as they are now
-  implementation-specific (located in `orchard` and `sapling-crypto` crates).
-- Generalized the note plaintext size to support variable sizes by adding the
-  abstract types `NotePlaintextBytes`, `NoteCiphertextBytes`,
-  `CompactNotePlaintextBytes`, and `CompactNoteCiphertextBytes` to the `Domain`
-  trait.
-- Removed the separate `NotePlaintextBytes` type definition (as it is now an
-  associated type).
-- Added new `parse_note_plaintext_bytes`, `parse_note_ciphertext_bytes`, and
-  `parse_compact_note_plaintext_bytes` methods to the `Domain` trait.
-- Updated the `note_plaintext_bytes` method of the `Domain` trait to return the
-  `NotePlaintextBytes` associated type.
-- Updated the `encrypt_note_plaintext` method of `NoteEncryption` to return the
-  `NoteCiphertextBytes` associated type of the `Domain` instead of the explicit
-  array.
-- Updated the `enc_ciphertext` method of the `ShieldedOutput` trait to return an
-  `Option` of a reference instead of a copy.
+### Added
 - Added a new `note_bytes` module with helper trait and struct to deal with note
   bytes data with abstracted underlying array size.
+
+### Changed
+- MSRV is now 1.88.
+- Migrated to `rand_core 0.10`. The `NoteEncryption::encrypt_outgoing_plaintext` 
+  method now requires its `rng` argument to implement `rand_core::Rng` instead
+  of `rand_core::RngCore`, as the latter trait is deprecated in `rand_core 0.10`.
+- The `Domain` trait has added associated `NotePlaintextBytes`,
+  `NoteCiphertextBytes`, `CompactNotePlaintextBytes`, and
+  `CompactNoteCiphertextBytes`, to support to support variable sizes for these
+  types.
+- The `Domain` trait has added `parse_note_plaintext_bytes`,
+  `parse_note_ciphertext_bytes`, and `parse_compact_note_plaintext_bytes`
+  methods.
+- `Domain::note_plaintext_bytes` now returns the associated
+  `NotePlaintextBytes` type.
+- `NoteEncryuption::encrypt_note_plaintext` now returns `<D: Domain>::NoteCiphertextBytes`
+  instead of a concrete array type.
+- `ShieldedOutput::enc_ciphertext` now returns an `Option` of a reference
+  instead of a copy.
 - `ShieldedOutput` has added method `cmstar`, which exposes the
   `ExtractedCommitment` of the shielded output directly, in addition to the
   byte encoding exposed by `ShieldedOutput::cmstar_bytes`. This is useful for
   further generalizing scanning code.
-- MSRV is now 1.88.
-- **Breaking change:** migrated to `rand_core 0.10`. The
-  `NoteEncryption::encrypt_outgoing_plaintext` method now requires its `rng`
-  argument to implement `rand_core::Rng` instead of `rand_core::RngCore`, as
-  the latter trait is deprecated in `rand_core 0.10`.
+
+### Removed
+- The constants `COMPACT_NOTE_SIZE`, `NOTE_PLAINTEXT_SIZE`, and
+  `ENC_CIPHERTEXT_SIZE` have been removed; they are now implementation-specific
+  (located in `orchard` and `sapling-crypto` crates).
+- `NotePlaintextBytes` has been removed; it is now an associated type of the
+  `Domain` trait.
+
 
 ## [0.4.2] - 2026-07-11
 
