@@ -786,8 +786,10 @@ pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
     let (note, to) = domain.parse_note_plaintext_without_memo_ovk(&pk_d, &compact)?;
 
     // ZIP 212: Check that the esk provided to this function is consistent with the esk we can
-    // derive from the note. This check corresponds to `ToScalar(PRF^{expand}_{rseed}([4]) = esk`
-    // in https://zips.z.cash/protocol/protocol.pdf#decryptovk. (`ρ^opt = []` for Sapling.)
+    // derive from the note. This check corresponds to
+    // `ToScalar(PRF^{expand}_{rseed}(pre_esk)) = esk` in
+    // https://zips.z.cash/protocol/protocol.pdf#decryptovk, where `pre_esk = [5]` for Sapling
+    // and `pre_esk = [4] || ρ` for Orchard.
     if let Some(derived_esk) = D::derive_esk(&note) {
         if (!derived_esk.ct_eq(&esk)).into() {
             return None;
