@@ -1,6 +1,27 @@
 name: CI checks
 
+permissions: {}
+
 on: [push, pull_request]
+
+concurrency:
+  group: >-
+    ${{
+      format(
+        'ci-{0}-{1}-{2}',
+        github.workflow,
+        github.event_name,
+        github.event.pull_request.number || github.ref
+      )
+    }}
+  cancel-in-progress: >-
+    ${{
+      github.event_name == 'pull_request'
+      || (
+        github.event_name == 'push'
+        && github.ref == 'refs/heads/main'
+      )
+    }}
 
 jobs:
   test:
@@ -10,7 +31,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Run tests
         run: cargo test --all-features --verbose
       - name: Verify working directory is clean
@@ -23,10 +46,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - run: rustup override set ${{steps.toolchain.outputs.name}}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install stable toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup override set stable
+        shell: bash
       - name: Remove lockfile to build with latest dependencies
         run: rm Cargo.lock
       - name: Build crate
@@ -41,18 +68,24 @@ jobs:
       matrix:
         target:
           - wasm32-wasip1
+    env:
+      TARGET: ${{ matrix.target }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Add target
-        run: rustup target add ${{ matrix.target }}
+        run: rustup target add "${TARGET}"
       - name: Build crate
-        run: cargo build --no-default-features --verbose --target ${{ matrix.target }}
+        run: cargo build --no-default-features --verbose --target "${TARGET}"
 
   bitrot:
     name: Bitrot check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       # Build benchmarks to prevent bitrot
       - name: Build benchmarks
         run: cargo build --benches
@@ -60,26 +93,30 @@ jobs:
   clippy:
     name: Clippy (MSRV)
     runs-on: ubuntu-latest
+    permissions:
+      checks: write # Required by clippy-action to post check-run annotations.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Run Clippy
-        uses: auguwu/clippy-action@1.4.0
+        uses: auguwu/clippy-action@9817d076b82df0194935be9db6154c56ac07b317 # 1.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          working-directory: ${{ inputs.target }}
-          deny: warnings
+          args: -D warnings
 
   clippy-beta:
     name: Clippy (beta)
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - id: toolchain
-        uses: dtolnay/rust-toolchain@beta
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          components: clippy
-      - run: rustup override set ${{ steps.toolchain.outputs.name }}
+          persist-credentials: false
+      - name: Install beta toolchain
+        run: |
+          rustup toolchain install beta --profile minimal --component clippy
+          rustup override set beta
       - name: Run Clippy (beta)
         run: cargo clippy --all-features --all-targets -- -W clippy::all
 
@@ -87,7 +124,9 @@ jobs:
     name: Intra-doc links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - run: cargo fetch
       # Requires #![deny(rustdoc::broken_intra_doc_links)] in crate.
       - name: Check intra-doc links
@@ -97,6 +136,8 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Check formatting
         run: cargo fmt -- --check
