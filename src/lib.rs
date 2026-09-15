@@ -8,7 +8,7 @@
 //! trait are provided in the [`sapling-crypto`] and [`orchard`] crates; users with their
 //! own existing types can similarly implement the trait themselves.
 //!
-//! [in-band secret distribution scheme]: https://zips.z.cash/protocol/nu5.pdf#saplingandorchardinband
+//! [in-band secret distribution scheme]: https://zips.z.cash/protocol/protocol.pdf#saplingandorchardinband
 //! [`sapling-crypto`]: https://crates.io/crates/sapling-crypto
 //! [`orchard`]: https://crates.io/crates/orchard
 
@@ -153,14 +153,14 @@ pub trait Domain {
     /// See [section 4.20.2: Decryption using an Incoming Viewing Key (Sapling and
     /// Orchard)][decryptivk] of the Zcash Protocol Specification.
     ///
-    /// [decryptivk]: https://zips.z.cash/protocol/nu5.pdf#decryptivk
+    /// [decryptivk]: https://zips.z.cash/protocol/protocol.pdf#decryptivk
     type IncomingViewingKey;
     /// The outgoing viewing key used to decrypt notes by the sender.
     ///
     /// See [section 4.20.3: Decryption using an Outgoing Viewing Key (Sapling and
     /// Orchard)][decryptovk] of the Zcash Protocol Specification.
     ///
-    /// [decryptovk]: https://zips.z.cash/protocol/nu5.pdf#decryptovk
+    /// [decryptovk]: https://zips.z.cash/protocol/protocol.pdf#decryptovk
     type OutgoingViewingKey;
     /// The commitment to the value of the note.
     type ValueCommitment;
@@ -460,7 +460,7 @@ where
 /// consistent with each other.
 ///
 /// Implements section 4.20.1: Encryption (Sapling and Orchard) of the
-/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#saplingandorchardencrypt)
+/// [Zcash Protocol Specification](https://zips.z.cash/protocol/protocol.pdf#saplingandorchardencrypt)
 pub struct NoteEncryption<D: Domain> {
     epk: D::EphemeralPublicKey,
     esk: D::EphemeralSecretKey,
@@ -570,7 +570,7 @@ impl<D: Domain> NoteEncryption<D> {
 /// which the note was sent.
 ///
 /// Implements section 4.20.2 of the
-/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptivk).
+/// [Zcash Protocol Specification](https://zips.z.cash/protocol/protocol.pdf#decryptivk).
 pub fn try_note_decryption<D: Domain, Output: ShieldedOutput<D>>(
     domain: &D,
     ivk: &D::IncomingViewingKey,
@@ -708,7 +708,7 @@ fn try_compact_note_decryption_inner<D: Domain, Output: ShieldedOutput<D>>(
 ///
 /// Implements [Zcash Protocol Specification section 4.20.3][decryptovk].
 ///
-/// [decryptovk]: https://zips.z.cash/protocol/nu5.pdf#decryptovk
+/// [decryptovk]: https://zips.z.cash/protocol/protocol.pdf#decryptovk
 pub fn try_output_recovery_with_ovk<D: Domain, Output: ShieldedOutput<D>>(
     domain: &D,
     ovk: &D::OutgoingViewingKey,
@@ -727,7 +727,7 @@ pub fn try_output_recovery_with_ovk<D: Domain, Output: ShieldedOutput<D>>(
 /// which the note was sent.
 ///
 /// Implements part of section 4.20.3 of the
-/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptovk).
+/// [Zcash Protocol Specification](https://zips.z.cash/protocol/protocol.pdf#decryptovk).
 /// For decryption using a Full Viewing Key see [`try_output_recovery_with_ovk`].
 pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
     domain: &D,
@@ -760,7 +760,7 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
 /// note was sent.
 ///
 /// Implements part of section 4.20.3 of the
-/// [Zcash Protocol Specification](https://zips.z.cash/protocol/nu5.pdf#decryptovk).
+/// [Zcash Protocol Specification](https://zips.z.cash/protocol/protocol.pdf#decryptovk).
 /// For decryption using a Full Viewing Key see [`try_output_recovery_with_ovk`].
 pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
     domain: &D,
@@ -787,7 +787,7 @@ pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
 
     // ZIP 212: Check that the esk provided to this function is consistent with the esk we can
     // derive from the note. This check corresponds to `ToScalar(PRF^{expand}_{rseed}([4]) = esk`
-    // in https://zips.z.cash/protocol/nu5.pdf#decryptovk. (`ρ^opt = []` for Sapling.)
+    // in https://zips.z.cash/protocol/protocol.pdf#decryptovk. (`ρ^opt = []` for Sapling.)
     if let Some(derived_esk) = D::derive_esk(&note) {
         if (!derived_esk.ct_eq(&esk)).into() {
             return None;
