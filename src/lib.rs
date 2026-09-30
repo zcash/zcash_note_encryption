@@ -30,7 +30,7 @@ use chacha20::{
     cipher::{StreamCipher, StreamCipherSeek},
     ChaCha20,
 };
-use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305, KeyInit};
+use chacha20poly1305::{AeadInOut, ChaCha20Poly1305, KeyInit, Nonce};
 use cipher::KeyIvInit;
 
 use rand_core::Rng;
@@ -546,8 +546,9 @@ impl<D: Domain> NoteEncryption<D> {
 
         let output = input.as_mut();
 
-        let tag = ChaCha20Poly1305::new(key.as_ref().into())
-            .encrypt_in_place_detached([0u8; 12][..].into(), &[], output)
+        let tag = ChaCha20Poly1305::new_from_slice(key.as_ref())
+            .expect("the symmetric key is 32 bytes")
+            .encrypt_inout_detached(&Nonce::default(), &[], output.into())
             .unwrap();
         D::parse_note_ciphertext_bytes(output, tag.into()).expect("the output length is correct")
     }
@@ -577,8 +578,12 @@ impl<D: Domain> NoteEncryption<D> {
 
         let mut output = [0u8; OUT_CIPHERTEXT_SIZE];
         output[..OUT_PLAINTEXT_SIZE].copy_from_slice(&input.0);
-        let tag = ChaCha20Poly1305::new(ock.as_ref().into())
-            .encrypt_in_place_detached([0u8; 12][..].into(), &[], &mut output[..OUT_PLAINTEXT_SIZE])
+        let tag = ChaCha20Poly1305::new(&ock.0.into())
+            .encrypt_inout_detached(
+                &Nonce::default(),
+                &[],
+                (&mut output[..OUT_PLAINTEXT_SIZE]).into(),
+            )
             .unwrap();
         output[OUT_PLAINTEXT_SIZE..].copy_from_slice(&tag);
 
@@ -617,8 +622,14 @@ fn try_note_decryption_inner<D: Domain, Output: ShieldedOutput<D>>(
 ) -> Option<(D::Note, D::Recipient, D::Memo)> {
     let (mut plaintext, tag) = output.split_ciphertext_at_tag()?;
 
-    ChaCha20Poly1305::new(key.as_ref().into())
-        .decrypt_in_place_detached([0u8; 12][..].into(), &[], plaintext.as_mut(), &tag.into())
+    ChaCha20Poly1305::new_from_slice(key.as_ref())
+        .ok()?
+        .decrypt_inout_detached(
+            &Nonce::default(),
+            &[],
+            plaintext.as_mut().into(),
+            &tag.into(),
+        )
         .ok()?;
 
     let (compact, memo) = domain.split_plaintext_at_memo(&plaintext)?;
@@ -710,7 +721,7 @@ fn try_compact_note_decryption_inner<D: Domain, Output: ShieldedOutput<D>>(
     let mut plaintext: D::CompactNotePlaintextBytes =
         D::parse_compact_note_plaintext_bytes(output.enc_ciphertext_compact().as_ref())?;
 
-    let mut keystream = ChaCha20::new(key.as_ref().into(), [0u8; 12][..].into());
+    let mut keystream = ChaCha20::new_from_slices(key.as_ref(), &[0u8; 12]).ok()?;
     keystream.seek(64);
     keystream.apply_keystream(plaintext.as_mut());
 
@@ -761,13 +772,9 @@ pub fn try_output_recovery_with_ock<D: Domain, Output: ShieldedOutput<D>>(
     let mut op = OutPlaintextBytes([0; OUT_PLAINTEXT_SIZE]);
     op.0.copy_from_slice(&out_ciphertext[..OUT_PLAINTEXT_SIZE]);
 
-    ChaCha20Poly1305::new(ock.as_ref().into())
-        .decrypt_in_place_detached(
-            [0u8; 12][..].into(),
-            &[],
-            &mut op.0,
-            out_ciphertext[OUT_PLAINTEXT_SIZE..].into(),
-        )
+    let tag: [u8; AEAD_TAG_SIZE] = out_ciphertext[OUT_PLAINTEXT_SIZE..].try_into().ok()?;
+    ChaCha20Poly1305::new(&ock.0.into())
+        .decrypt_inout_detached(&Nonce::default(), &[], (&mut op.0[..]).into(), &tag.into())
         .ok()?;
 
     let pk_d = D::extract_pk_d(&op)?;
@@ -800,8 +807,14 @@ pub fn try_output_recovery_with_pkd_esk<D: Domain, Output: ShieldedOutput<D>>(
 
     let (mut plaintext, tag) = output.split_ciphertext_at_tag()?;
 
-    ChaCha20Poly1305::new(key.as_ref().into())
-        .decrypt_in_place_detached([0u8; 12][..].into(), &[], plaintext.as_mut(), &tag.into())
+    ChaCha20Poly1305::new_from_slice(key.as_ref())
+        .ok()?
+        .decrypt_inout_detached(
+            &Nonce::default(),
+            &[],
+            plaintext.as_mut().into(),
+            &tag.into(),
+        )
         .ok()?;
 
     let (compact, memo) = domain.split_plaintext_at_memo(&plaintext)?;
