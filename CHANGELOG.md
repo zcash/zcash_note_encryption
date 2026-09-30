@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this library adheres to Rust's notion of
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Migrated to `chacha20 0.10`, `chacha20poly1305 0.11`, and `cipher 0.5`.
+- Decryption and output recovery now return `None` instead of panicking when
+  `Domain::SymmetricKey` is not 32 bytes long.
+
 ## [0.5.0] - 2026-09-15
 
 ### Added
