@@ -7,6 +7,8 @@ and this library adheres to Rust's notion of
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-09-30
+
 ### Changed
 - Migrated to `chacha20 0.10`, `chacha20poly1305 0.11`, and `cipher 0.5`.
 - Decryption and output recovery now return `None` instead of panicking when
