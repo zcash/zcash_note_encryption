@@ -61,24 +61,8 @@ where
     // Reassembly below is in the (output-major, ivk-minor) order the batch-KDF
     // expects, moving values out of the per-ivk columns (`SharedSecret` need not be
     // `Clone`).
-    let mut columns: Vec<_> = ivks
-        .iter()
-        .map(|ivk| {
-            D::batch_ka_agree_dec(ivk, ephemeral_keys.iter().map(|(epk, _)| epk.as_ref()))
-                .into_iter()
-        })
-        .collect();
-    let mut secrets: Vec<Option<D::SharedSecret>> =
-        Vec::with_capacity(ephemeral_keys.len() * ivks.len());
-    for _ in 0..ephemeral_keys.len() {
-        for column in columns.iter_mut() {
-            secrets.push(
-                column
-                    .next()
-                    .expect("all columns have one entry per output"),
-            );
-        }
-    }
+    let epk_refs: Vec<_> = ephemeral_keys.iter().map(|(epk, _)| epk.as_ref()).collect();
+    let secrets = D::batch_ka_agree_dec_multi(ivks, &epk_refs);
     let items = secrets.into_iter().zip(
         ephemeral_keys
             .iter()
