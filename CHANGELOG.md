@@ -7,6 +7,13 @@ and this library adheres to Rust's notion of
 
 ## [Unreleased]
 
+### Added
+- `zcash_note_encryption::BatchDomain::batch_ka_agree_dec_multi`, a provided
+  method that computes `ka_agree_dec` for every combination of IVKs and
+  ephemeral public keys, so that domains can share work between keys that are
+  agreed against the same point. The default implementation preserves the
+  previous behaviour of `batch_note_decryption`.
+
 ## [0.5.1] - 2026-09-30
 
 ### Changed

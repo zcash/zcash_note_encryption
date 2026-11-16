@@ -409,6 +409,34 @@ pub trait BatchDomain: Domain {
         epks.map(|epk| epk.map(|epk| Self::ka_agree_dec(ivk, epk)))
             .collect()
     }
+
+    /// Computes `Self::ka_agree_dec` for every combination of `ivks` and `epks`, in
+    /// output-major, ivk-minor order (`result[i * ivks.len() + j]` is the secret of
+    /// `epks[i]` with `ivks[j]`), with `None` wherever the epk is `None`.
+    ///
+    /// Domains whose agreements with several keys against the same point can share work
+    /// (such as the doublings of the point) can override this. The default runs
+    /// [`Self::batch_ka_agree_dec`] once per ivk.
+    fn batch_ka_agree_dec_multi(
+        ivks: &[Self::IncomingViewingKey],
+        epks: &[Option<&Self::PreparedEphemeralPublicKey>],
+    ) -> Vec<Option<Self::SharedSecret>> {
+        let mut columns: Vec<_> = ivks
+            .iter()
+            .map(|ivk| Self::batch_ka_agree_dec(ivk, epks.iter().copied()).into_iter())
+            .collect();
+        let mut secrets = Vec::with_capacity(epks.len() * ivks.len());
+        for _ in 0..epks.len() {
+            for column in columns.iter_mut() {
+                secrets.push(
+                    column
+                        .next()
+                        .expect("all columns have one entry per output"),
+                );
+            }
+        }
+        secrets
+    }
 }
 
 /// Trait that provides access to the components of an encrypted transaction output.
